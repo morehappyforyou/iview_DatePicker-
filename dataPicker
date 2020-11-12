@@ -1,0 +1,87 @@
+<template>
+    <Row>
+         <Col span="12" style="margin-left:470px;">开始时间：
+         <Date-picker v-model="startTime" confirm format="yyyy-MM-dd HH:mm" type="datetime" :options="startTimeOptions" @on-change="startTimeChange" placement="right" placeholder="请选择开始时间" style="margin-bottom:10px;width:180px;"></Date-picker>
+         </Col>
+         <Button type="primary" icon="ios-search" @click="refreshRealData()" style="float:right;background-color:transparent;color:Gray;border-color:Gainsboro;">查询</Button>
+         <Col span="12">结束时间：
+         <Date-picker v-model="endTime" confirm format="yyyy-MM-dd HH:mm" type="datetime" :options="endTimeOptions" @on-change="endTimeChange" placement="right" placeholder="请选择结束时间" style="margin-left:10px;margin-bottom:10px;width:180px;"></Date-picker>
+          </Col>
+   </Row>
+</template>  
+ 
+<script>
+export default{
+    name: "",
+    data: {
+       let that = this;
+       return:{
+           nowDate: "",    // 当前日期
+           nowTime: "",    // 当前时间
+           nowWeek: "",   // 当前星期
+           timer: 0,
+           appData:{
+               operateType: "add", //展开抽屉的类型
+               drawerTitle: "", //展开抽屉的标题
+               drawer: false, //抽屉指针
+               searchParam: { //查询参数
+                    pageIndex: 1,
+                    pageSize: 10,
+                    endAt: "",
+                    startAt: ""
+                },
+                startTime: '',
+                endTime: '',
+                startTimeOptions:{},
+                endTimeOptions:{},
+                realData:{
+                    searchParam: { //查询参数
+                        deviceId: '',
+                        pageIndex: 1,
+                        pageSize: 10,
+                        startAt: '2020-10-1', //传参
+                        endAt: '2020-11-11'
+                    },
+                }
+           }
+       }
+    },
+    methods:{
+        refreshRealData() {
+          this.loadingReal = true;
+          var url = api.buoy_all_page;
+          let that = this;
+          let param = new FormData();
+          param.append("deviceId",this.realData.searchParam.deviceId);
+          param.append("pageIndex",this.realData.searchParam.pageIndex);
+          param.append("pageSize", this.realData.searchParam.pageSize);
+          param.append("endAt", this.realData.searchParam.endAt);
+          param.append("startAt", this.realData.searchParam.startAt);
+          this.$req.post(param, url, function (_r, _x) {
+            that.loadingReal = false;
+            if (_r.success) {
+              var res = _r.result;
+              that.realData.list = res.records;
+              that.realData.searchParam.pageSize = res.size;
+              that.realData.searchParam.pageIndex = res.current;
+              that.realData.pageTotal = res.total;
+            } else {
+              _u.error(that,_r.message);
+            }
+          }, function error(e) {
+                let res = e;
+                that.loadingReal = false;
+                _u.error(that, JSON.stringify(_ex));          
+              });
+         },
+        startTimeChange: function(e) { //设置开始时间,e是点击的日期
+            this.startTime = e;
+            this.realData.searchParam.startAt = e
+        },
+        endTimeChange: function(e) { //设置结束时间
+            this.endTime = e;
+            this.realData.searchParam.endAt = e
+        },
+    }
+}
+</script>
